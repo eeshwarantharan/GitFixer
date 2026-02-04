@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   keywords: ["github", "bug fix", "ai", "automation", "pull request", "openai", "gemini", "anthropic"],
   authors: [{ name: "Tharan", url: "https://sense.cse.iitm.ac.in" }],
   openGraph: {
-    title: "GitFixer | Self-Healing Reposr",
+    title: "GitFixer | Self-Healing Repos",
     description:
       "Automatically fix bugs and open pull requests using AI.",
     type: "website",
