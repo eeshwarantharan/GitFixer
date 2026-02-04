@@ -21,6 +21,13 @@ export const authOptions: NextAuthOptions = {
         async session({ session, user }) {
             if (session.user) {
                 session.user.id = user.id;
+                // Include preferredProvider in session to avoid extra DB query on dashboard
+                const fullUser = await prisma.user.findUnique({
+                    where: { id: user.id },
+                    select: { preferredProvider: true },
+                });
+                (session.user as { preferredProvider?: string }).preferredProvider =
+                    fullUser?.preferredProvider || "huggingface";
             }
             return session;
         },
