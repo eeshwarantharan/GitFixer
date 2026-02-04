@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
-import Image from "next/image";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
     GearIcon,
@@ -32,26 +31,10 @@ export default async function DashboardLayout({
                     </Link>
                 </div>
 
-                {/* User Info */}
+                {/* User Info - Simplified */}
                 <div className="p-4 border-b border-border">
-                    <div className="flex items-center gap-3">
-                        {session.user.image && (
-                            <Image
-                                src={session.user.image}
-                                alt={session.user.name || "User"}
-                                width={40}
-                                height={40}
-                                className="border-2 border-border flex-shrink-0"
-                            />
-                        )}
-                        <div className="min-w-0 flex-1">
-                            <div className="font-medium text-sm truncate max-w-[140px]">
-                                {session.user.name?.split(" ")[0] || "User"}
-                            </div>
-                            <div className="text-xs text-muted-foreground truncate max-w-[140px]">
-                                {session.user.email}
-                            </div>
-                        </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                        {session.user.email}
                     </div>
                 </div>
 
