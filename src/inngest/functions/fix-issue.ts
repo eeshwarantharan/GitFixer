@@ -167,18 +167,30 @@ export const fixIssue = inngest.createFunction(
             const octokit = new Octokit({ auth: credentials.githubToken });
             const branchName = `gitfixer/issue-${issueNumber}`;
 
+            // Get repo details to find default branch
+            const { data: repoData } = await octokit.repos.get({
+                owner: context.owner,
+                repo: context.repo,
+            });
+            const defaultBranch = repoData.default_branch;
+
             // Get default branch ref
             const { data: refData } = await octokit.git.getRef({
                 owner: context.owner,
                 repo: context.repo,
-                ref: "heads/main",
-            }).catch(() =>
-                octokit.git.getRef({
+                ref: `heads/${defaultBranch}`,
+            });
+
+            // Check if branch already exists and delete it if so (for idempotency)
+            try {
+                await octokit.git.deleteRef({
                     owner: context.owner,
                     repo: context.repo,
-                    ref: "heads/master",
-                })
-            );
+                    ref: `heads/${branchName}`,
+                });
+            } catch {
+                // Ignore error if branch doesn't exist
+            }
 
             // Create new branch
             await octokit.git.createRef({
@@ -188,11 +200,16 @@ export const fixIssue = inngest.createFunction(
                 sha: refData.object.sha,
             });
 
+            // Sanitize file path (remove leading slash)
+            const filePath = aiResponse.file_path.startsWith("/")
+                ? aiResponse.file_path.slice(1)
+                : aiResponse.file_path;
+
             // Create or update file
             await octokit.repos.createOrUpdateFileContents({
                 owner: context.owner,
                 repo: context.repo,
-                path: aiResponse.file_path,
+                path: filePath,
                 message: aiResponse.commit_message,
                 content: Buffer.from(aiResponse.code_change).toString("base64"),
                 branch: branchName,
@@ -205,7 +222,7 @@ export const fixIssue = inngest.createFunction(
                 repo: context.repo,
                 title: `🤖 ${aiResponse.commit_message}`,
                 head: branchName,
-                base: "main",
+                base: defaultBranch,
                 body: `## 🔧 Automated Fix for Issue #${issueNumber}
 
 **Issue:** ${context.issueTitle}
@@ -282,20 +299,22 @@ async function queryOpenAI(apiKey: string, prompt: string): Promise<AIFixRespons
 }
 
 /**
- * Query Google Gemini 2.0 Flash for a bug fix
+ * Query Google Gemini 1.5 Flash for a bug fix
  */
 async function queryGemini(apiKey: string, prompt: string): Promise<AIFixResponse> {
     const genAI = new GoogleGenerativeAI(apiKey);
 
     const model = genAI.getGenerativeModel({
-        model: "gemini-3-flash-preview",
+        model: "gemini-1.5-flash",
         generationConfig: {
             temperature: 0.2,
             responseMimeType: "application/json",
         },
     });
 
-    const fullPrompt = `${SYSTEM_PROMPT}\n\n${prompt}`;
+    const fullPrompt = `${SYSTEM_PROMPT}
+
+${prompt}`;
 
     const result = await model.generateContent(fullPrompt);
     const response = result.response;
