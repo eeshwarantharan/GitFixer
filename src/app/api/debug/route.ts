@@ -25,6 +25,8 @@ export async function GET() {
         nextAuthUrl: process.env.NEXTAUTH_URL || "not set",
         hasNextAuthSecret: !!process.env.NEXTAUTH_SECRET,
         hasDatabaseUrl: !!process.env.DATABASE_URL,
+        hasInngestEventKey: !!process.env.INNGEST_EVENT_KEY,
+        hasInngestSigningKey: !!process.env.INNGEST_SIGNING_KEY,
         dbStatus,
         dbError: dbError || undefined,
         nodeEnv: process.env.NODE_ENV,
