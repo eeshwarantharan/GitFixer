@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
         // Check if user has an API key
         const apiKey = repo.user.apiKeys.find(
-            (k) => k.isValid && (k.provider === "openai" || k.provider === "anthropic")
+            (k: { isValid: boolean; provider: string }) => k.isValid && (k.provider === "openai" || k.provider === "anthropic" || k.provider === "google")
         );
 
         if (!apiKey) {
