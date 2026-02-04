@@ -1,11 +1,13 @@
 import { NextAuthOptions, getServerSession } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import type { Adapter } from "next-auth/adapters";
-import prisma from "@/lib/prisma";
+// Temporarily disabled for debugging
+// import { PrismaAdapter } from "@auth/prisma-adapter";
+// import type { Adapter } from "next-auth/adapters";
+// import prisma from "@/lib/prisma";
 
 export const authOptions: NextAuthOptions = {
-    adapter: PrismaAdapter(prisma as unknown as Parameters<typeof PrismaAdapter>[0]) as Adapter,
+    // Temporarily disabled adapter for debugging
+    // adapter: PrismaAdapter(prisma as unknown as Parameters<typeof PrismaAdapter>[0]) as Adapter,
     providers: [
         GitHubProvider({
             clientId: process.env.GITHUB_CLIENT_ID!,
@@ -18,26 +20,17 @@ export const authOptions: NextAuthOptions = {
         }),
     ],
     callbacks: {
-        async session({ session, user }) {
-            if (session.user) {
-                session.user.id = user.id;
+        async session({ session, token }) {
+            if (session.user && token.sub) {
+                session.user.id = token.sub;
             }
             return session;
         },
-        async signIn({ user, account }) {
-            if (account?.provider === "github" && user.id) {
-                try {
-                    await prisma.user.update({
-                        where: { id: user.id },
-                        data: {
-                            githubId: account.providerAccountId,
-                        },
-                    });
-                } catch (error) {
-                    console.error("Failed to update user with GitHub ID:", error);
-                }
+        async jwt({ token, account }) {
+            if (account) {
+                token.accessToken = account.access_token;
             }
-            return true;
+            return token;
         },
     },
     pages: {
@@ -45,9 +38,9 @@ export const authOptions: NextAuthOptions = {
         error: "/login",
     },
     session: {
-        strategy: "database",
+        strategy: "jwt", // Changed from database to JWT for testing
     },
-    debug: true, // Temporarily enabled for debugging
+    debug: true,
 };
 
 export const auth = () => getServerSession(authOptions);
