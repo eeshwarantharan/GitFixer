@@ -10,7 +10,7 @@ interface Repo {
     name: string;
     fullName: string;
     isWatched: boolean;
-    webhookId: number | null;
+    webhookId: string | null;
     createdAt: Date;
     updatedAt: Date;
 }
