@@ -70,23 +70,19 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Get user's preferred provider (default: huggingface)
+        // Get user's preferred provider (defaults to huggingface)
         const preferredProvider = repo.user.preferredProvider || "huggingface";
 
-        // Find API key - prefer user's choice, fallback to any valid key
+        // First try to find the preferred provider's key, then fallback to any valid key
         let apiKey = repo.user.apiKeys.find(
             (k: { isValid: boolean; provider: string }) => k.isValid && k.provider === preferredProvider
         );
 
-        // If preferred not available, try huggingface (free), then others
+        // If no key for preferred provider, try any valid key
         if (!apiKey) {
             apiKey = repo.user.apiKeys.find(
-                (k: { isValid: boolean; provider: string }) => k.isValid && k.provider === "huggingface"
-            );
-        }
-        if (!apiKey) {
-            apiKey = repo.user.apiKeys.find(
-                (k: { isValid: boolean; provider: string }) => k.isValid && ["openai", "google", "anthropic"].includes(k.provider)
+                (k: { isValid: boolean; provider: string }) => k.isValid &&
+                    (k.provider === "huggingface" || k.provider === "openai" || k.provider === "google")
             );
         }
 

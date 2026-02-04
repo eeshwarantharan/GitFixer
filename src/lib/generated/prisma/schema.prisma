@@ -65,7 +65,7 @@ model User {
   emailVerified     DateTime? @map("email_verified")
   image             String?
   githubId          String?   @unique @map("github_id")
-  preferredProvider String    @default("huggingface") @map("preferred_provider")
+  preferredProvider String    @default("huggingface") @map("preferred_provider") // "huggingface" | "google" | "openai" | "anthropic"
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
