@@ -10,9 +10,12 @@ export async function getPreferredProvider(): Promise<Provider> {
     const session = await auth();
     if (!session?.user?.id) return "huggingface";
 
-    // Read from session (cached during auth) instead of extra DB query
-    const sessionUser = session.user as { preferredProvider?: string };
-    return (sessionUser.preferredProvider as Provider) || "huggingface";
+    const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { preferredProvider: true },
+    });
+
+    return (user?.preferredProvider as Provider) || "huggingface";
 }
 
 export async function setPreferredProvider(
