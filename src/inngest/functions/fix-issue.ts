@@ -305,7 +305,7 @@ async function queryGemini(apiKey: string, prompt: string): Promise<AIFixRespons
     const genAI = new GoogleGenerativeAI(apiKey);
 
     const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-pro",
         generationConfig: {
             temperature: 0.2,
             responseMimeType: "application/json",
