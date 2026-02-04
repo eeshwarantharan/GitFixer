@@ -12,13 +12,13 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GitFixer | Self-Healing Bug Fixer",
+  title: "GitFixer | Self-Healing Repos",
   description:
-    "Automatically fix bugs and open pull requests using AI. Connect your GitHub repos and let GitFixer do the rest.",
+    "Automatically fix bugs/issues and open pull requests using AI. Connect your GitHub repos and let GitFixer do the rest.",
   keywords: ["github", "bug fix", "ai", "automation", "pull request", "openai", "gemini", "anthropic"],
   authors: [{ name: "Tharan", url: "https://sense.cse.iitm.ac.in" }],
   openGraph: {
-    title: "GitFixer | Self-Healing Bug Fixer",
+    title: "GitFixer | Self-Healing Reposr",
     description:
       "Automatically fix bugs and open pull requests using AI.",
     type: "website",
