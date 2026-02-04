@@ -60,14 +60,15 @@ model VerificationToken {
 // ============================================
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime? @map("email_verified")
-  image         String?
-  githubId      String?   @unique @map("github_id")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  id                String    @id @default(cuid())
+  name              String?
+  email             String?   @unique
+  emailVerified     DateTime? @map("email_verified")
+  image             String?
+  githubId          String?   @unique @map("github_id")
+  preferredProvider String    @default("huggingface") @map("preferred_provider")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   // Relations
   accounts  Account[]

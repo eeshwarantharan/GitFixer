@@ -1,13 +1,18 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import Link from "next/link";
+import Image from "next/image";
+import prisma from "@/lib/prisma";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SidebarProviderSelector } from "@/components/sidebar-provider-selector";
 import {
     GearIcon,
     GitHubLogoIcon,
     ActivityLogIcon,
     ExitIcon,
 } from "@radix-ui/react-icons";
+
+type Provider = "huggingface" | "google" | "openai" | "anthropic";
 
 export default async function DashboardLayout({
     children,
@@ -20,18 +25,35 @@ export default async function DashboardLayout({
         redirect("/login");
     }
 
+    // Fetch available API keys for provider toggle
+    const apiKeys = await prisma.aPIKey.findMany({
+        where: { userId: session.user.id },
+        select: { provider: true },
+    });
+
+    const availableProviders = apiKeys.map((k) => k.provider) as Provider[];
+
     return (
         <div className="min-h-screen flex">
             {/* Sidebar */}
             <aside className="w-64 border-r-2 border-border bg-card flex flex-col">
                 {/* Logo */}
-                <div className="p-6 border-b-2 border-border">
-                    <Link href="/dashboard" className="text-lg font-bold tracking-tight">
-                        [ GITFIXER ]
+                <div className="p-4 border-b-2 border-border">
+                    <Link href="/dashboard" className="flex items-center gap-3">
+                        <Image
+                            src="/logo.png"
+                            alt="GitFixer Logo"
+                            width={32}
+                            height={32}
+                            className="rounded"
+                        />
+                        <span className="text-lg font-bold tracking-tight">
+                            GITFIXER
+                        </span>
                     </Link>
                 </div>
 
-                {/* User Info - Simplified */}
+                {/* User Info */}
                 <div className="p-4 border-b border-border">
                     <div className="text-xs text-muted-foreground truncate">
                         {session.user.email}
@@ -71,8 +93,11 @@ export default async function DashboardLayout({
                     </ul>
                 </nav>
 
-                {/* Footer */}
-                <div className="p-4 border-t border-border space-y-2">
+                {/* Footer with Provider Toggle */}
+                <div className="p-4 border-t border-border space-y-3">
+                    {/* AI Provider Selector */}
+                    <SidebarProviderSelector availableProviders={availableProviders} />
+
                     <div className="flex items-center justify-between">
                         <span className="text-xs text-muted-foreground">Theme</span>
                         <ThemeToggle />
@@ -92,3 +117,4 @@ export default async function DashboardLayout({
         </div>
     );
 }
+
