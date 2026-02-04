@@ -41,14 +41,14 @@ export default async function DashboardLayout({
                                 alt={session.user.name || "User"}
                                 width={40}
                                 height={40}
-                                className="border-2 border-border"
+                                className="border-2 border-border flex-shrink-0"
                             />
                         )}
-                        <div className="overflow-hidden">
-                            <div className="font-medium text-sm truncate">
-                                {session.user.name}
+                        <div className="min-w-0 flex-1">
+                            <div className="font-medium text-sm truncate max-w-[140px]">
+                                {session.user.name?.split(" ")[0] || "User"}
                             </div>
-                            <div className="text-xs text-muted-foreground truncate">
+                            <div className="text-xs text-muted-foreground truncate max-w-[140px]">
                                 {session.user.email}
                             </div>
                         </div>
