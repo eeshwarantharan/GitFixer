@@ -30,7 +30,7 @@ export default function HomePage() {
           {/* Status Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 border-2 border-accent text-accent text-sm font-medium">
             <span className="w-2 h-2 bg-accent animate-pulse" />
-            SELF-HEALING BUG FIXER
+            SELF-HEALING REPOS
           </div>
 
           {/* Main Heading */}
