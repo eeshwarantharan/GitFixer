@@ -5,7 +5,7 @@ import { saveApiKey } from "./actions";
 import { EyeOpenIcon, EyeClosedIcon, CheckIcon } from "@radix-ui/react-icons";
 
 interface APIKeyFormProps {
-    provider: "openai" | "anthropic" | "google";
+    provider: "openai" | "anthropic" | "google" | "huggingface";
     hasExisting: boolean;
     placeholder: string;
 }

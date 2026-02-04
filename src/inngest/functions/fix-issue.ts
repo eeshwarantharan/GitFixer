@@ -36,7 +36,7 @@ export const fixIssue = inngest.createFunction(
         const credentials = await step.run("get-credentials", async (): Promise<{
             githubToken: string;
             apiKey: string;
-            provider: "openai" | "google" | "anthropic";
+            provider: "openai" | "google" | "anthropic" | "huggingface";
         }> => {
             const [account, apiKey] = await Promise.all([
                 prisma.account.findFirst({
@@ -61,7 +61,7 @@ export const fixIssue = inngest.createFunction(
             return {
                 githubToken: account.access_token,
                 apiKey: decryptedApiKey,
-                provider: apiKey.provider as "openai" | "google" | "anthropic",
+                provider: apiKey.provider as "openai" | "google" | "anthropic" | "huggingface",
             };
         });
 
@@ -122,6 +122,9 @@ export const fixIssue = inngest.createFunction(
             } else if (credentials.provider === "openai") {
                 // Use OpenAI GPT-4o
                 return await queryOpenAI(credentials.apiKey, prompt);
+            } else if (credentials.provider === "huggingface") {
+                // Use HuggingFace Inference API (free tier friendly)
+                return await queryHuggingFace(credentials.apiKey, prompt);
             } else {
                 throw new Error(`Provider ${credentials.provider} not yet supported for bug fixing`);
             }
@@ -325,6 +328,57 @@ ${prompt}`;
     }
 
     return JSON.parse(text) as AIFixResponse;
+}
+
+/**
+ * Query HuggingFace Inference Providers API (free tier friendly)
+ * Uses the OpenAI-compatible chat completions endpoint with DeepSeek-R1
+ * Docs: https://huggingface.co/docs/api-inference/index
+ */
+async function queryHuggingFace(apiKey: string, prompt: string): Promise<AIFixResponse> {
+    // Use DeepSeek-R1 - currently one of the best open source models
+    // Alternative models: "Qwen/Qwen2.5-72B-Instruct", "meta-llama/Llama-3.3-70B-Instruct"
+    const model = "deepseek-ai/DeepSeek-R1";
+
+    const response = await fetch(
+        "https://router.huggingface.co/v1/chat/completions",
+        {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    { role: "system", content: SYSTEM_PROMPT },
+                    { role: "user", content: prompt }
+                ],
+                max_tokens: 4096,
+                temperature: 0.2,
+            }),
+        }
+    );
+
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`HuggingFace API error (${response.status}): ${error}`);
+    }
+
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content || "";
+
+    if (!text) {
+        throw new Error("No response from HuggingFace");
+    }
+
+    // Extract JSON from response (model might include explanation before JSON)
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+        throw new Error("Could not parse JSON from HuggingFace response: " + text.substring(0, 200));
+    }
+
+    return JSON.parse(jsonMatch[0]) as AIFixResponse;
 }
 
 // ============================================

@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 import { encrypt, validateDecryptedKey } from "@/lib/encryption";
 
 export async function saveApiKey(
-    provider: "openai" | "anthropic" | "google",
+    provider: "openai" | "anthropic" | "google" | "huggingface",
     apiKey: string
 ): Promise<{ success: boolean; message: string }> {
     try {
@@ -17,7 +17,7 @@ export async function saveApiKey(
 
         // Validate key format
         if (!validateDecryptedKey(apiKey, provider)) {
-            const providerName = provider === "openai" ? "OpenAI" : provider === "anthropic" ? "Anthropic" : "Google Gemini";
+            const providerName = provider === "openai" ? "OpenAI" : provider === "anthropic" ? "Anthropic" : provider === "huggingface" ? "HuggingFace" : "Google Gemini";
             return {
                 success: false,
                 message: `Invalid ${providerName} API key format`,
@@ -50,7 +50,7 @@ export async function saveApiKey(
             },
         });
 
-        const providerName = provider === "openai" ? "OpenAI" : provider === "anthropic" ? "Anthropic" : "Google Gemini";
+        const providerName = provider === "openai" ? "OpenAI" : provider === "anthropic" ? "Anthropic" : provider === "huggingface" ? "HuggingFace" : "Google Gemini";
         return {
             success: true,
             message: `${providerName} API key saved successfully`,

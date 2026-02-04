@@ -28,6 +28,7 @@ export default async function SettingsPage() {
     const hasOpenAI = apiKeys.find((k) => k.provider === "openai");
     const hasAnthropic = apiKeys.find((k) => k.provider === "anthropic");
     const hasGoogle = apiKeys.find((k) => k.provider === "google");
+    const hasHuggingFace = apiKeys.find((k) => k.provider === "huggingface");
 
     return (
         <div className="p-8 max-w-2xl">
@@ -102,6 +103,34 @@ export default async function SettingsPage() {
                             className="text-accent hover:underline"
                         >
                             aistudio.google.com
+                        </a>
+                    </p>
+                </div>
+
+                {/* HuggingFace Token */}
+                <div className="mb-6">
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-medium">HuggingFace Token <span className="text-success">(FREE)</span></label>
+                        {hasHuggingFace && (
+                            <span className={`status-badge ${hasHuggingFace.isValid ? "status-ok" : "status-err"}`}>
+                                [ {hasHuggingFace.isValid ? "VALID" : "INVALID"} ]
+                            </span>
+                        )}
+                    </div>
+                    <APIKeyForm
+                        provider="huggingface"
+                        hasExisting={!!hasHuggingFace}
+                        placeholder="hf_..."
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                        Get your free token from{" "}
+                        <a
+                            href="https://huggingface.co/settings/tokens"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-accent hover:underline"
+                        >
+                            huggingface.co/settings/tokens
                         </a>
                     </p>
                 </div>

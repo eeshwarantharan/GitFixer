@@ -95,7 +95,7 @@ export function generateEncryptionKey(): string {
  */
 export function validateDecryptedKey(
     decryptedKey: string,
-    provider: "openai" | "anthropic" | "google"
+    provider: "openai" | "anthropic" | "google" | "huggingface"
 ): boolean {
     if (!decryptedKey || decryptedKey.length < 20) {
         return false;
@@ -114,6 +114,11 @@ export function validateDecryptedKey(
     if (provider === "google") {
         // Google Gemini keys start with "AIza"
         return decryptedKey.startsWith("AIza");
+    }
+
+    if (provider === "huggingface") {
+        // HuggingFace tokens start with "hf_"
+        return decryptedKey.startsWith("hf_");
     }
 
     return false;
