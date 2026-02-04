@@ -102,7 +102,7 @@ model Repo {
   name      String // repo name only
   fullName  String   @map("full_name") // owner/repo
   isWatched Boolean  @default(false) @map("is_watched")
-  webhookId Int?     @map("webhook_id")
+  webhookId String?  @map("webhook_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

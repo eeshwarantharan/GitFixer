@@ -7047,12 +7047,10 @@ export namespace Prisma {
 
   export type RepoAvgAggregateOutputType = {
     githubId: number | null
-    webhookId: number | null
   }
 
   export type RepoSumAggregateOutputType = {
     githubId: number | null
-    webhookId: number | null
   }
 
   export type RepoMinAggregateOutputType = {
@@ -7062,7 +7060,7 @@ export namespace Prisma {
     name: string | null
     fullName: string | null
     isWatched: boolean | null
-    webhookId: number | null
+    webhookId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -7074,7 +7072,7 @@ export namespace Prisma {
     name: string | null
     fullName: string | null
     isWatched: boolean | null
-    webhookId: number | null
+    webhookId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -7095,12 +7093,10 @@ export namespace Prisma {
 
   export type RepoAvgAggregateInputType = {
     githubId?: true
-    webhookId?: true
   }
 
   export type RepoSumAggregateInputType = {
     githubId?: true
-    webhookId?: true
   }
 
   export type RepoMinAggregateInputType = {
@@ -7233,7 +7229,7 @@ export namespace Prisma {
     name: string
     fullName: string
     isWatched: boolean
-    webhookId: number | null
+    webhookId: string | null
     createdAt: Date
     updatedAt: Date
     _count: RepoCountAggregateOutputType | null
@@ -7336,7 +7332,7 @@ export namespace Prisma {
       name: string
       fullName: string
       isWatched: boolean
-      webhookId: number | null
+      webhookId: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["repo"]>
@@ -7770,7 +7766,7 @@ export namespace Prisma {
     readonly name: FieldRef<"Repo", 'String'>
     readonly fullName: FieldRef<"Repo", 'String'>
     readonly isWatched: FieldRef<"Repo", 'Boolean'>
-    readonly webhookId: FieldRef<"Repo", 'Int'>
+    readonly webhookId: FieldRef<"Repo", 'String'>
     readonly createdAt: FieldRef<"Repo", 'DateTime'>
     readonly updatedAt: FieldRef<"Repo", 'DateTime'>
   }
@@ -9972,7 +9968,7 @@ export namespace Prisma {
     name?: StringFilter<"Repo"> | string
     fullName?: StringFilter<"Repo"> | string
     isWatched?: BoolFilter<"Repo"> | boolean
-    webhookId?: IntNullableFilter<"Repo"> | number | null
+    webhookId?: StringNullableFilter<"Repo"> | string | null
     createdAt?: DateTimeFilter<"Repo"> | Date | string
     updatedAt?: DateTimeFilter<"Repo"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -10003,7 +9999,7 @@ export namespace Prisma {
     name?: StringFilter<"Repo"> | string
     fullName?: StringFilter<"Repo"> | string
     isWatched?: BoolFilter<"Repo"> | boolean
-    webhookId?: IntNullableFilter<"Repo"> | number | null
+    webhookId?: StringNullableFilter<"Repo"> | string | null
     createdAt?: DateTimeFilter<"Repo"> | Date | string
     updatedAt?: DateTimeFilter<"Repo"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -10037,7 +10033,7 @@ export namespace Prisma {
     name?: StringWithAggregatesFilter<"Repo"> | string
     fullName?: StringWithAggregatesFilter<"Repo"> | string
     isWatched?: BoolWithAggregatesFilter<"Repo"> | boolean
-    webhookId?: IntNullableWithAggregatesFilter<"Repo"> | number | null
+    webhookId?: StringNullableWithAggregatesFilter<"Repo"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Repo"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Repo"> | Date | string
   }
@@ -10517,7 +10513,7 @@ export namespace Prisma {
     name: string
     fullName: string
     isWatched?: boolean
-    webhookId?: number | null
+    webhookId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutReposInput
@@ -10531,7 +10527,7 @@ export namespace Prisma {
     name: string
     fullName: string
     isWatched?: boolean
-    webhookId?: number | null
+    webhookId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     issueLogs?: IssueLogUncheckedCreateNestedManyWithoutRepoInput
@@ -10543,7 +10539,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     fullName?: StringFieldUpdateOperationsInput | string
     isWatched?: BoolFieldUpdateOperationsInput | boolean
-    webhookId?: NullableIntFieldUpdateOperationsInput | number | null
+    webhookId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutReposNestedInput
@@ -10557,7 +10553,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     fullName?: StringFieldUpdateOperationsInput | string
     isWatched?: BoolFieldUpdateOperationsInput | boolean
-    webhookId?: NullableIntFieldUpdateOperationsInput | number | null
+    webhookId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     issueLogs?: IssueLogUncheckedUpdateManyWithoutRepoNestedInput
@@ -10570,7 +10566,7 @@ export namespace Prisma {
     name: string
     fullName: string
     isWatched?: boolean
-    webhookId?: number | null
+    webhookId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -10581,7 +10577,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     fullName?: StringFieldUpdateOperationsInput | string
     isWatched?: BoolFieldUpdateOperationsInput | boolean
-    webhookId?: NullableIntFieldUpdateOperationsInput | number | null
+    webhookId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -10593,7 +10589,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     fullName?: StringFieldUpdateOperationsInput | string
     isWatched?: BoolFieldUpdateOperationsInput | boolean
-    webhookId?: NullableIntFieldUpdateOperationsInput | number | null
+    webhookId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -11118,7 +11114,6 @@ export namespace Prisma {
 
   export type RepoAvgOrderByAggregateInput = {
     githubId?: SortOrder
-    webhookId?: SortOrder
   }
 
   export type RepoMaxOrderByAggregateInput = {
@@ -11147,7 +11142,6 @@ export namespace Prisma {
 
   export type RepoSumOrderByAggregateInput = {
     githubId?: SortOrder
-    webhookId?: SortOrder
   }
 
   export type IntWithAggregatesFilter<$PrismaModel = never> = {
@@ -12051,7 +12045,7 @@ export namespace Prisma {
     name: string
     fullName: string
     isWatched?: boolean
-    webhookId?: number | null
+    webhookId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     issueLogs?: IssueLogCreateNestedManyWithoutRepoInput
@@ -12063,7 +12057,7 @@ export namespace Prisma {
     name: string
     fullName: string
     isWatched?: boolean
-    webhookId?: number | null
+    webhookId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     issueLogs?: IssueLogUncheckedCreateNestedManyWithoutRepoInput
@@ -12234,7 +12228,7 @@ export namespace Prisma {
     name?: StringFilter<"Repo"> | string
     fullName?: StringFilter<"Repo"> | string
     isWatched?: BoolFilter<"Repo"> | boolean
-    webhookId?: IntNullableFilter<"Repo"> | number | null
+    webhookId?: StringNullableFilter<"Repo"> | string | null
     createdAt?: DateTimeFilter<"Repo"> | Date | string
     updatedAt?: DateTimeFilter<"Repo"> | Date | string
   }
@@ -12520,7 +12514,7 @@ export namespace Prisma {
     name: string
     fullName: string
     isWatched?: boolean
-    webhookId?: number | null
+    webhookId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     user: UserCreateNestedOneWithoutReposInput
@@ -12533,7 +12527,7 @@ export namespace Prisma {
     name: string
     fullName: string
     isWatched?: boolean
-    webhookId?: number | null
+    webhookId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -12601,7 +12595,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     fullName?: StringFieldUpdateOperationsInput | string
     isWatched?: BoolFieldUpdateOperationsInput | boolean
-    webhookId?: NullableIntFieldUpdateOperationsInput | number | null
+    webhookId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutReposNestedInput
@@ -12614,7 +12608,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     fullName?: StringFieldUpdateOperationsInput | string
     isWatched?: BoolFieldUpdateOperationsInput | boolean
-    webhookId?: NullableIntFieldUpdateOperationsInput | number | null
+    webhookId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -12656,7 +12650,7 @@ export namespace Prisma {
     name: string
     fullName: string
     isWatched?: boolean
-    webhookId?: number | null
+    webhookId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -12774,7 +12768,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     fullName?: StringFieldUpdateOperationsInput | string
     isWatched?: BoolFieldUpdateOperationsInput | boolean
-    webhookId?: NullableIntFieldUpdateOperationsInput | number | null
+    webhookId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     issueLogs?: IssueLogUpdateManyWithoutRepoNestedInput
@@ -12786,7 +12780,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     fullName?: StringFieldUpdateOperationsInput | string
     isWatched?: BoolFieldUpdateOperationsInput | boolean
-    webhookId?: NullableIntFieldUpdateOperationsInput | number | null
+    webhookId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     issueLogs?: IssueLogUncheckedUpdateManyWithoutRepoNestedInput
@@ -12798,7 +12792,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     fullName?: StringFieldUpdateOperationsInput | string
     isWatched?: BoolFieldUpdateOperationsInput | boolean
-    webhookId?: NullableIntFieldUpdateOperationsInput | number | null
+    webhookId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

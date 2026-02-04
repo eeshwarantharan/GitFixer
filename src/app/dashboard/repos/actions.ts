@@ -4,6 +4,21 @@ import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { Octokit } from "@octokit/rest";
 
+async function getOctokit(userId: string) {
+    const account = await prisma.account.findFirst({
+        where: {
+            userId,
+            provider: "github",
+        },
+    });
+
+    if (!account?.access_token) {
+        return null;
+    }
+
+    return new Octokit({ auth: account.access_token });
+}
+
 export async function syncRepos(): Promise<{ success: boolean; message: string }> {
     try {
         const session = await auth();
@@ -12,22 +27,10 @@ export async function syncRepos(): Promise<{ success: boolean; message: string }
             return { success: false, message: "Not authenticated" };
         }
 
-        // Get the user's GitHub access token
-        const account = await prisma.account.findFirst({
-            where: {
-                userId: session.user.id,
-                provider: "github",
-            },
-        });
-
-        if (!account?.access_token) {
+        const octokit = await getOctokit(session.user.id);
+        if (!octokit) {
             return { success: false, message: "GitHub access token not found. Please re-authenticate." };
         }
-
-        // Initialize Octokit with user's token
-        const octokit = new Octokit({
-            auth: account.access_token,
-        });
 
         // Fetch all repos the user has access to
         const { data: repos } = await octokit.repos.listForAuthenticatedUser({
@@ -86,19 +89,108 @@ export async function toggleRepoWatch(
             return { success: false, message: "Repository not found" };
         }
 
-        // Update watch status
-        await prisma.repo.update({
-            where: { id: repoId },
-            data: { isWatched },
-        });
+        const octokit = await getOctokit(session.user.id);
+        if (!octokit) {
+            return { success: false, message: "GitHub access token not found" };
+        }
 
-        // TODO: If enabling, create GitHub webhook
-        // TODO: If disabling, delete GitHub webhook
+        // Get the webhook URL
+        const webhookUrl = process.env.NEXTAUTH_URL
+            ? `${process.env.NEXTAUTH_URL}/api/webhooks/github`
+            : "https://git-fixer.vercel.app/api/webhooks/github";
 
-        return {
-            success: true,
-            message: isWatched ? "Now watching repository" : "Stopped watching repository",
-        };
+        const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET || "";
+
+        if (isWatched) {
+            // Create GitHub webhook
+            try {
+                const [owner, repoName] = repo.fullName.split("/");
+
+                // Check if webhook already exists
+                const { data: hooks } = await octokit.repos.listWebhooks({
+                    owner,
+                    repo: repoName,
+                });
+
+                const existingHook = hooks.find(h => h.config.url === webhookUrl);
+
+                if (!existingHook) {
+                    // Create new webhook
+                    const { data: hook } = await octokit.repos.createWebhook({
+                        owner,
+                        repo: repoName,
+                        config: {
+                            url: webhookUrl,
+                            content_type: "json",
+                            secret: webhookSecret,
+                        },
+                        events: ["issues"],
+                        active: true,
+                    });
+
+                    // Store webhook ID in repo record
+                    await prisma.repo.update({
+                        where: { id: repoId },
+                        data: {
+                            isWatched: true,
+                            webhookId: hook.id.toString(),
+                        },
+                    });
+                } else {
+                    // Just update the watch status
+                    await prisma.repo.update({
+                        where: { id: repoId },
+                        data: {
+                            isWatched: true,
+                            webhookId: existingHook.id.toString(),
+                        },
+                    });
+                }
+
+                return {
+                    success: true,
+                    message: "Now watching repository - webhook created",
+                };
+            } catch (webhookError) {
+                console.error("Failed to create webhook:", webhookError);
+                // Still mark as watched even if webhook fails
+                await prisma.repo.update({
+                    where: { id: repoId },
+                    data: { isWatched: true },
+                });
+                return {
+                    success: true,
+                    message: "Watching repository (webhook setup may have failed - check permissions)",
+                };
+            }
+        } else {
+            // Delete GitHub webhook
+            try {
+                if (repo.webhookId) {
+                    const [owner, repoName] = repo.fullName.split("/");
+                    await octokit.repos.deleteWebhook({
+                        owner,
+                        repo: repoName,
+                        hook_id: parseInt(repo.webhookId),
+                    });
+                }
+            } catch (deleteError) {
+                console.error("Failed to delete webhook:", deleteError);
+            }
+
+            await prisma.repo.update({
+                where: { id: repoId },
+                data: {
+                    isWatched: false,
+                    webhookId: null,
+                },
+            });
+
+            return {
+                success: true,
+                message: "Stopped watching repository",
+            };
+        }
     } catch (error) {
         console.error("Failed to toggle repo watch:", error);
         return { success: false, message: "Failed to update repository" };
