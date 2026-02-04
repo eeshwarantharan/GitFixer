@@ -1,14 +1,13 @@
+"use client";
+
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { signIn } from "next-auth/react";
 import { GitHubLogoIcon } from "@radix-ui/react-icons";
 
-export default async function LoginPage() {
-    const session = await auth();
-
-    if (session?.user) {
-        redirect("/dashboard");
-    }
+export default function LoginPage() {
+    const handleSignIn = () => {
+        signIn("github", { callbackUrl: "/dashboard" });
+    };
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center px-6 py-20">
@@ -23,14 +22,14 @@ export default async function LoginPage() {
                     </p>
                 </div>
 
-                {/* Sign In Link - external auth route */}
-                <Link
-                    href="/api/auth/signin/github"
+                {/* Sign In Button */}
+                <button
+                    onClick={handleSignIn}
                     className="btn-retro w-full justify-center flex items-center gap-2"
                 >
                     <GitHubLogoIcon className="w-5 h-5" />
                     SIGN IN WITH GITHUB
-                </Link>
+                </button>
 
                 {/* Divider */}
                 <div className="my-6 flex items-center">
