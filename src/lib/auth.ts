@@ -47,7 +47,7 @@ export const authOptions: NextAuthOptions = {
     session: {
         strategy: "database",
     },
-    debug: process.env.NODE_ENV === "development",
+    debug: true, // Temporarily enabled for debugging
 };
 
 export const auth = () => getServerSession(authOptions);
