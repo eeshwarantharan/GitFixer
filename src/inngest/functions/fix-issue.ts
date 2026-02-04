@@ -32,18 +32,23 @@ export const fixIssue = inngest.createFunction(
             });
         });
 
-        // Step 2: Get user's access token and API key
+        // Step 2: Get user's access token and API key (+ HuggingFace fallback)
         const credentials = await step.run("get-credentials", async (): Promise<{
             githubToken: string;
             apiKey: string;
             provider: "openai" | "google" | "anthropic" | "huggingface";
+            huggingfaceFallbackKey?: string; // For automatic fallback on rate limits
         }> => {
-            const [account, apiKey] = await Promise.all([
+            const [account, apiKey, huggingfaceKey] = await Promise.all([
                 prisma.account.findFirst({
                     where: { userId, provider: "github" },
                 }),
                 prisma.aPIKey.findUnique({
                     where: { id: apiKeyId },
+                }),
+                // Also fetch HuggingFace key for fallback (if exists)
+                prisma.aPIKey.findFirst({
+                    where: { userId, provider: "huggingface" },
                 }),
             ]);
 
@@ -51,17 +56,28 @@ export const fixIssue = inngest.createFunction(
                 throw new Error("Missing credentials");
             }
 
-            // Decrypt the API key
+            // Decrypt the primary API key
             const decryptedApiKey = decrypt(
                 apiKey.encryptedKey,
                 apiKey.iv,
                 apiKey.authTag
             );
 
+            // Decrypt HuggingFace key if available (for fallback)
+            let huggingfaceFallbackKey: string | undefined;
+            if (huggingfaceKey && apiKey.provider !== "huggingface") {
+                huggingfaceFallbackKey = decrypt(
+                    huggingfaceKey.encryptedKey,
+                    huggingfaceKey.iv,
+                    huggingfaceKey.authTag
+                );
+            }
+
             return {
                 githubToken: account.access_token,
                 apiKey: decryptedApiKey,
                 provider: apiKey.provider as "openai" | "google" | "anthropic" | "huggingface",
+                huggingfaceFallbackKey,
             };
         });
 
@@ -106,7 +122,7 @@ export const fixIssue = inngest.createFunction(
             };
         });
 
-        // Step 4: Query AI for fix (supports OpenAI and Gemini)
+        // Step 4: Query AI for fix (with automatic HuggingFace fallback on rate limits)
         const aiResponse = await step.run("query-ai", async () => {
             const prompt = buildAgentPrompt(
                 repoFullName,
@@ -116,17 +132,45 @@ export const fixIssue = inngest.createFunction(
                 context.fileTree
             );
 
-            if (credentials.provider === "google") {
-                // Use Gemini 2.0 Flash
-                return await queryGemini(credentials.apiKey, prompt);
-            } else if (credentials.provider === "openai") {
-                // Use OpenAI GPT-4o
-                return await queryOpenAI(credentials.apiKey, prompt);
-            } else if (credentials.provider === "huggingface") {
-                // Use HuggingFace Inference API (free tier friendly)
-                return await queryHuggingFace(credentials.apiKey, prompt);
-            } else {
-                throw new Error(`Provider ${credentials.provider} not yet supported for bug fixing`);
+            // Helper to detect rate limit errors
+            const isRateLimitError = (error: unknown): boolean => {
+                if (error instanceof Error) {
+                    const msg = error.message.toLowerCase();
+                    return msg.includes("429") ||
+                        msg.includes("rate limit") ||
+                        msg.includes("quota exceeded") ||
+                        msg.includes("too many requests");
+                }
+                return false;
+            };
+
+            // Try primary provider first
+            try {
+                if (credentials.provider === "google") {
+                    return await queryGemini(credentials.apiKey, prompt);
+                } else if (credentials.provider === "openai") {
+                    return await queryOpenAI(credentials.apiKey, prompt);
+                } else if (credentials.provider === "huggingface") {
+                    return await queryHuggingFace(credentials.apiKey, prompt);
+                } else {
+                    throw new Error(`Provider ${credentials.provider} not yet supported for bug fixing`);
+                }
+            } catch (primaryError) {
+                // If rate limited and HuggingFace fallback is available, try it
+                if (isRateLimitError(primaryError) && credentials.huggingfaceFallbackKey) {
+                    console.log(`[GitFixer] Primary provider ${credentials.provider} hit rate limit, falling back to HuggingFace...`);
+                    try {
+                        return await queryHuggingFace(credentials.huggingfaceFallbackKey, prompt);
+                    } catch (fallbackError) {
+                        // If fallback also fails, throw a combined error
+                        throw new Error(
+                            `Primary provider (${credentials.provider}) rate limited. ` +
+                            `HuggingFace fallback also failed: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`
+                        );
+                    }
+                }
+                // No fallback available or not a rate limit error - rethrow original
+                throw primaryError;
             }
         });
 
