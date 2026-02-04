@@ -1,26 +1,310 @@
 @import "tailwindcss";
 
+/* ============================================
+   GitFixer - Retro-Modern / Engineering Chic
+   ============================================ */
+
+/* Light Mode (Default) */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fdfbf7;
+  --foreground: #1a1a1a;
+  --muted: #f5f3ef;
+  --muted-foreground: #6b6b6b;
+  --border: #1a1a1a;
+  --accent: #ff6b35;
+  --accent-foreground: #ffffff;
+  --success: #22c55e;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+}
+
+/* Dark Mode - GitHub Charcoal */
+.dark {
+  --background: #0d1117;
+  --foreground: #e6edf3;
+  --muted: #161b22;
+  --muted-foreground: #8b949e;
+  --border: #30363d;
+  --accent: #39d353;
+  --accent-foreground: #0d1117;
+  --success: #39d353;
+  --error: #f85149;
+  --warning: #d29922;
+  --card: #161b22;
+  --card-foreground: #e6edf3;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --color-warning: var(--warning);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --font-mono: "IBM Plex Mono", monospace;
+  --radius: 0px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ============================================
+   Base Styles
+   ============================================ */
+
+* {
+  border-color: var(--border);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "IBM Plex Mono", monospace;
+  font-feature-settings: "ss01", "ss02";
+}
+
+/* ============================================
+   Retro Buttons
+   ============================================ */
+
+.btn-retro {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  font-family: "IBM Plex Mono", monospace;
+  font-weight: 500;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 2px solid var(--foreground);
+  background: var(--background);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: all 0.1s ease;
+  user-select: none;
+}
+
+.btn-retro:hover {
+  background: var(--foreground);
+  color: var(--background);
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0px var(--foreground);
+}
+
+.btn-retro:active {
+  transform: translate(0, 0);
+  box-shadow: none;
+}
+
+.btn-retro-accent {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.btn-retro-accent:hover {
+  background: transparent;
+  color: var(--accent);
+  box-shadow: 4px 4px 0px var(--accent);
+}
+
+/* ============================================
+   Status Badges - Terminal Style
+   ============================================ */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid currentColor;
+}
+
+.status-ok {
+  color: var(--success);
+}
+
+.status-err {
+  color: var(--error);
+}
+
+.status-pending {
+  color: var(--warning);
+}
+
+.status-processing {
+  color: var(--accent);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ============================================
+   Terminal-Style Table
+   ============================================ */
+
+.table-terminal {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.875rem;
+}
+
+.table-terminal th,
+.table-terminal td {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.table-terminal th {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  background: var(--muted);
+}
+
+.table-terminal tr:hover {
+  background: var(--muted);
+}
+
+/* ============================================
+   Card Component
+   ============================================ */
+
+.card-retro {
+  background: var(--card);
+  border: 2px solid var(--border);
+  padding: 1.5rem;
+}
+
+.card-retro-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ============================================
+   Input Fields
+   ============================================ */
+
+.input-retro {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.875rem;
+  background: var(--background);
+  border: 2px solid var(--border);
+  color: var(--foreground);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.input-retro:focus {
+  border-color: var(--accent);
+}
+
+.input-retro::placeholder {
+  color: var(--muted-foreground);
+}
+
+/* ============================================
+   Toggle Switch
+   ============================================ */
+
+.toggle-switch {
+  position: relative;
+  width: 48px;
+  height: 24px;
+  background: var(--muted);
+  border: 2px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-switch.active {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.toggle-switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--foreground);
+  transition: transform 0.2s ease;
+}
+
+.toggle-switch.active::after {
+  transform: translateX(24px);
+  background: var(--accent-foreground);
+}
+
+/* ============================================
+   Scrollbar Styling
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border: 1px solid var(--muted);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+/* ============================================
+   Code/Terminal Block
+   ============================================ */
+
+.terminal-block {
+  background: #0d1117;
+  color: #e6edf3;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.8125rem;
+  padding: 1rem;
+  overflow-x: auto;
+  border: 2px solid #30363d;
+}
+
+.terminal-block .prompt {
+  color: #39d353;
+}
+
+.terminal-block .command {
+  color: #e6edf3;
+}
+
+.terminal-block .output {
+  color: #8b949e;
 }

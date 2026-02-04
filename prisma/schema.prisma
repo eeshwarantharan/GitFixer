@@ -1,0 +1,136 @@
+// GitFixer Prisma Schema
+// Database: PostgreSQL (Neon - Serverless)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+// ============================================
+// NextAuth.js Required Models
+// ============================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================
+// GitFixer Core Models
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  githubId      String?   @unique @map("github_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  accounts  Account[]
+  sessions  Session[]
+  apiKeys   APIKey[]
+  repos     Repo[]
+  issueLogs IssueLog[]
+
+  @@map("users")
+}
+
+model APIKey {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  provider     String   // "openai" | "anthropic"
+  encryptedKey String   @map("encrypted_key") @db.Text
+  iv           String   // Initialization vector for AES-256-GCM
+  authTag      String   @map("auth_tag") // Authentication tag
+  isValid      Boolean  @default(true) @map("is_valid")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@map("api_keys")
+}
+
+model Repo {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  githubId  Int      @unique @map("github_id")
+  name      String   // repo name only
+  fullName  String   @map("full_name") // owner/repo
+  isWatched Boolean  @default(false) @map("is_watched")
+  webhookId Int?     @map("webhook_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issueLogs IssueLog[]
+
+  @@map("repos")
+}
+
+model IssueLog {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  repoId       String   @map("repo_id")
+  issueNumber  Int      @map("issue_number")
+  issueTitle   String   @map("issue_title")
+  status       String   // "pending" | "processing" | "success" | "failed"
+  prNumber     Int?     @map("pr_number")
+  prUrl        String?  @map("pr_url")
+  errorMessage String?  @map("error_message") @db.Text
+  retryCount   Int      @default(0) @map("retry_count")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repo Repo @relation(fields: [repoId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([repoId])
+  @@index([status])
+  @@map("issue_logs")
+}
