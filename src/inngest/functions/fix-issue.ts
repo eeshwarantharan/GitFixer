@@ -437,8 +437,25 @@ async function queryHuggingFace(apiKey: string, prompt: string): Promise<AIFixRe
                 throw new Error("Could not parse JSON from HuggingFace response: " + text.substring(0, 200));
             }
 
+            // Sanitize JSON - escape control characters in string values
+            // This fixes "Bad control character in string literal" errors
+            let jsonStr = jsonMatch[0];
+
+            // Replace unescaped control characters within JSON strings
+            // Match string contents and escape control chars
+            jsonStr = jsonStr.replace(/"([^"\\]|\\.)*"/g, (match: string) => {
+                return match
+                    .replace(/\n/g, '\\n')
+                    .replace(/\r/g, '\\r')
+                    .replace(/\t/g, '\\t')
+                    .replace(/[\x00-\x1f]/g, (char: string) => {
+                        // Escape other control characters
+                        return '\\u' + char.charCodeAt(0).toString(16).padStart(4, '0');
+                    });
+            });
+
             console.log(`[GitFixer] Successfully got response from ${model}`);
-            return JSON.parse(jsonMatch[0]) as AIFixResponse;
+            return JSON.parse(jsonStr) as AIFixResponse;
 
         } catch (error) {
             lastError = error instanceof Error ? error : new Error(String(error));
