@@ -376,53 +376,79 @@ ${prompt}`;
 
 /**
  * Query HuggingFace Inference Providers API (free tier friendly)
- * Uses the OpenAI-compatible chat completions endpoint with DeepSeek-R1
+ * Uses fast models that won't timeout on serverless
  * Docs: https://huggingface.co/docs/api-inference/index
  */
 async function queryHuggingFace(apiKey: string, prompt: string): Promise<AIFixResponse> {
-    // Use DeepSeek-R1 - currently one of the best open source models
-    // Alternative models: "Qwen/Qwen2.5-72B-Instruct", "meta-llama/Llama-3.3-70B-Instruct"
-    const model = "deepseek-ai/DeepSeek-R1";
+    // Use Mistral-7B-Instruct - fast and reliable on free tier
+    // Fallback models if this fails: "Qwen/Qwen2.5-7B-Instruct", "microsoft/Phi-3-mini-4k-instruct"
+    const models = [
+        "mistralai/Mistral-7B-Instruct-v0.3",
+        "Qwen/Qwen2.5-7B-Instruct",
+    ];
 
-    const response = await fetch(
-        "https://router.huggingface.co/v1/chat/completions",
-        {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                model: model,
-                messages: [
-                    { role: "system", content: SYSTEM_PROMPT },
-                    { role: "user", content: prompt }
-                ],
-                max_tokens: 4096,
-                temperature: 0.2,
-            }),
+    let lastError: Error | null = null;
+
+    for (const model of models) {
+        try {
+            console.log(`[GitFixer] Trying HuggingFace model: ${model}`);
+
+            const response = await fetch(
+                "https://router.huggingface.co/v1/chat/completions",
+                {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${apiKey}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        messages: [
+                            { role: "system", content: SYSTEM_PROMPT },
+                            { role: "user", content: prompt }
+                        ],
+                        max_tokens: 4096,
+                        temperature: 0.2,
+                    }),
+                }
+            );
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                // If 504 timeout or 503 service unavailable, try next model
+                if (response.status === 504 || response.status === 503 || response.status === 529) {
+                    console.log(`[GitFixer] Model ${model} timed out (${response.status}), trying next...`);
+                    lastError = new Error(`${model} timed out: ${response.status}`);
+                    continue;
+                }
+                throw new Error(`HuggingFace API error (${response.status}): ${errorText.substring(0, 200)}`);
+            }
+
+            const data = await response.json();
+            const text = data.choices?.[0]?.message?.content || "";
+
+            if (!text) {
+                throw new Error("No response from HuggingFace");
+            }
+
+            // Extract JSON from response (model might include explanation before JSON)
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) {
+                throw new Error("Could not parse JSON from HuggingFace response: " + text.substring(0, 200));
+            }
+
+            console.log(`[GitFixer] Successfully got response from ${model}`);
+            return JSON.parse(jsonMatch[0]) as AIFixResponse;
+
+        } catch (error) {
+            lastError = error instanceof Error ? error : new Error(String(error));
+            console.log(`[GitFixer] Model ${model} failed: ${lastError.message}`);
+            // Continue to next model
         }
-    );
-
-    if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`HuggingFace API error (${response.status}): ${error}`);
     }
 
-    const data = await response.json();
-    const text = data.choices?.[0]?.message?.content || "";
-
-    if (!text) {
-        throw new Error("No response from HuggingFace");
-    }
-
-    // Extract JSON from response (model might include explanation before JSON)
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-        throw new Error("Could not parse JSON from HuggingFace response: " + text.substring(0, 200));
-    }
-
-    return JSON.parse(jsonMatch[0]) as AIFixResponse;
+    // All models failed
+    throw new Error(`All HuggingFace models failed. Last error: ${lastError?.message || "Unknown error"}`);
 }
 
 // ============================================
