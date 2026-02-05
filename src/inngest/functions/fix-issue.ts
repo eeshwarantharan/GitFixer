@@ -318,6 +318,71 @@ Closes #${issueNumber}`,
 );
 
 // ============================================
+// JSON Parsing Helper (Critical for AI responses)
+// ============================================
+
+/**
+ * Safely parse AI response with sanitization and validation
+ * Handles control characters, nested JSON, and malformed responses
+ */
+function safeParseAIResponse(rawText: string, providerName: string): AIFixResponse {
+    if (!rawText || typeof rawText !== "string") {
+        throw new Error(`${providerName}: Empty or invalid response`);
+    }
+
+    // Extract JSON object from response (handles markdown code blocks, explanations, etc.)
+    let jsonStr = rawText;
+
+    // Try to find JSON object in the response
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+        jsonStr = jsonMatch[0];
+    }
+
+    // Sanitize: escape control characters inside JSON string values
+    // This fixes "Bad control character in string literal" errors
+    jsonStr = jsonStr.replace(/"([^"\\]|\\.)*"/g, (match: string) => {
+        return match
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r')
+            .replace(/\t/g, '\\t')
+            .replace(/[\x00-\x1f]/g, (char: string) => {
+                // Escape other control characters (0x00-0x1F except already handled)
+                const code = char.charCodeAt(0);
+                if (code === 0x0a || code === 0x0d || code === 0x09) return char; // Already handled
+                return '\\u' + code.toString(16).padStart(4, '0');
+            });
+    });
+
+    // Try to parse
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(jsonStr);
+    } catch (parseError) {
+        // Log the problematic JSON for debugging
+        console.error(`[GitFixer] ${providerName} JSON parse error. First 500 chars:`, jsonStr.substring(0, 500));
+        throw new Error(
+            `${providerName}: Failed to parse JSON - ${parseError instanceof Error ? parseError.message : String(parseError)}`
+        );
+    }
+
+    // Validate required fields
+    const response = parsed as AIFixResponse;
+    if (!response.file_path) {
+        throw new Error(`${providerName}: Missing 'file_path' in response`);
+    }
+    if (!response.code_change) {
+        throw new Error(`${providerName}: Missing 'code_change' in response`);
+    }
+    if (typeof response.confidence_score !== "number") {
+        // Default confidence if not provided
+        response.confidence_score = 50;
+    }
+
+    return response;
+}
+
+// ============================================
 // AI Provider Functions
 // ============================================
 
@@ -342,7 +407,7 @@ async function queryOpenAI(apiKey: string, prompt: string): Promise<AIFixRespons
         throw new Error("No response from OpenAI");
     }
 
-    return JSON.parse(content) as AIFixResponse;
+    return safeParseAIResponse(content, "OpenAI");
 }
 
 /**
@@ -371,7 +436,7 @@ ${prompt}`;
         throw new Error("No response from Gemini");
     }
 
-    return JSON.parse(text) as AIFixResponse;
+    return safeParseAIResponse(text, "Gemini");
 }
 
 /**
@@ -431,31 +496,9 @@ async function queryHuggingFace(apiKey: string, prompt: string): Promise<AIFixRe
                 throw new Error("No response from HuggingFace");
             }
 
-            // Extract JSON from response (model might include explanation before JSON)
-            const jsonMatch = text.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) {
-                throw new Error("Could not parse JSON from HuggingFace response: " + text.substring(0, 200));
-            }
-
-            // Sanitize JSON - escape control characters in string values
-            // This fixes "Bad control character in string literal" errors
-            let jsonStr = jsonMatch[0];
-
-            // Replace unescaped control characters within JSON strings
-            // Match string contents and escape control chars
-            jsonStr = jsonStr.replace(/"([^"\\]|\\.)*"/g, (match: string) => {
-                return match
-                    .replace(/\n/g, '\\n')
-                    .replace(/\r/g, '\\r')
-                    .replace(/\t/g, '\\t')
-                    .replace(/[\x00-\x1f]/g, (char: string) => {
-                        // Escape other control characters
-                        return '\\u' + char.charCodeAt(0).toString(16).padStart(4, '0');
-                    });
-            });
-
+            // Use the centralized safe parser with sanitization
             console.log(`[GitFixer] Successfully got response from ${model}`);
-            return JSON.parse(jsonStr) as AIFixResponse;
+            return safeParseAIResponse(text, `HuggingFace/${model}`);
 
         } catch (error) {
             lastError = error instanceof Error ? error : new Error(String(error));
